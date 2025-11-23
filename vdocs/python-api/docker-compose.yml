@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  langchain-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: langchain-api:latest
+    container_name: langchain-api
+    ports:
+      - "8000:8000"
+    environment:
+      # 从 .env 文件读取
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - ENVIRONMENT=${ENVIRONMENT:-production}
+      - DEBUG=${DEBUG:-false}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    volumes:
+      # 持久化数据
+      - ./data:/app/data
+      - ./logs:/app/logs
+    env_file:
+      - .env
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - langchain-network
+
+networks:
+  langchain-network:
+    driver: bridge
+
